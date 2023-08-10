@@ -1,0 +1,42 @@
+from bs4 import BeautifulSoup
+import requests
+import pandas as pd
+
+input_text = input("What would you like to search?")
+split_text = input_text.split()
+url_base = "https://pubmed.ncbi.nlm.nih.gov/?term="  
+print(split_text)
+
+for i in split_text:   
+    url_base += i + "+"
+
+print(url_base)
+
+limit = 200
+count = 0
+data = []  
+
+for page_number in range(1, 20):
+    url = url_base + "&page=" + str(page_number)
+    response = requests.get(url)
+    html_content = response.content.decode('utf-8')
+
+    soup = BeautifulSoup(html_content, "html.parser")  
+
+    specific_tags = soup.find_all(class_="docsum-title")
+    
+    for tag in specific_tags:
+        text_content = tag.get_text(strip=True)
+        data.append(text_content)
+
+    count += len(specific_tags)
+    if count >= limit:
+        break
+
+df = pd.DataFrame(data, columns=["Text Content"])
+
+excel_file = "C:\\Users\\9733426\\Desktop\\pubmeddata.xlsx"
+df.to_excel(excel_file, index=False)
+
+print("Data exported to", excel_file)
+
